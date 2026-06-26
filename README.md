@@ -463,6 +463,82 @@ automateBIOMAPS Lambda
 
 This workflow is used to send both **survey reminder emails** (when the close date is within 4 days) and **report-ready emails** (when the survey closes and data is uploaded). The email templates are defined in `automateBIOMAPS/utilities/reminder.txt` and `automateBIOMAPS/utilities/report_sent.txt`.
 
+#### Workflow 3: "Update Close Dates, Update CIS, and Send Email" (on BIOMAPS_Date_Changes survey)
+
+**Trigger:** A new response is created on `BIOMAPS_Date_Changes` (newly created responses only).
+
+This workflow runs when an instructor submits the date change form to request a new survey close date or update their reminder preference. It calls the `changeBIOMAPSDates` Lambda, updates the CIS embedded data, and sends a confirmation email — but only if the change is valid.
+
+```
+Instructor submits BIOMAPS_Date_Changes form
+(provides ResponseID, new close date, reminder preference)
+        │
+        ▼
+┌──────────────────────────────────────────┐
+│  T-ID 1: Initiate necessary changes      │
+│  POST → changeBIOMAPSDates Lambda        │
+│  Sends: Instructor_ID, Requested Survey  │
+│         Close Date, Requested Survey     │
+│         Reminder                         │
+│  Returns: Email, Course Name, Course     │
+│  Number, Instructor name, Survey Type,   │
+│  JSON Request, Update Possible           │
+└──────────────────────────────────────────┘
+        │
+        ▼
+┌──────────────────────────────────────────┐
+│  T-ID 2: Update CIS Response's           │
+│  Embedded Data                           │
+│  PUT → Qualtrics API                     │
+│  Updates the CIS response with the       │
+│  JSON Request from T-ID 1 (new close     │
+│  date and reminder settings)             │
+└──────────────────────────────────────────┘
+        │
+        ▼
+┌──────────────────────────────────────────┐
+│  Decision: Survey change requested       │
+│  is valid                                │
+│  Continues ONLY if T-ID 1 returned       │
+│  "Update Possible" == true               │
+│  (otherwise workflow ends, no email sent)│
+└──────────────────────────────────────────┘
+        │ (if valid)
+        ▼
+┌──────────────────────────────────────────┐
+│  T-ID 3: Send confirmation email         │
+│  To: Instructor email (from T-ID 1)      │
+│  From: BIOMAPS@cornell.edu               │
+│  Confirms new close date                 │
+└──────────────────────────────────────────┘
+```
+
+**Task details:**
+
+| Step | Type | Target | What it does |
+|------|------|--------|-------------|
+| T-ID 1 | WebService (POST) | `changeBIOMAPSDates` Lambda | Sends the instructor's Response ID, requested close date, and reminder preference. Returns instructor details (name, email, course info, survey type), a JSON Request payload for updating the CIS, and an `Update Possible` flag. |
+| T-ID 2 | WebService (PUT) | Qualtrics API (`/API/v3/responses/{ResponseID}`) | Updates the CIS response's embedded data using the `JSON Request` returned by T-ID 1 (sets new Survey Close Date and Survey Reminder). |
+| Decision | Conditional | — | Checks if `Update Possible` from T-ID 1 equals `true`. If not, the workflow ends without sending an email (e.g., if the Response ID was invalid). |
+| T-ID 3 | Email | Instructor | Sends a confirmation email with the new close date (see template below). |
+
+**T-ID 3 email template (sent to instructor on date change):**
+
+> Dear {Instructor First} {Instructor Last},
+>
+> Thank you again for participating in the {Survey Type} survey. Changes were recently made to the close date for your class, {Course Name} ({Course Number}). This survey is currently set to close for students on the following date (yyyy/mm/dd):
+>
+> {New Close Date}
+>
+> If you would like to change this date again, please fill out the form again with your unique ResponseID ({ResponseID}):
+>
+> https://cornell.ca1.qualtrics.com/jfe/form/SV_3TTUJMbWVDZ2aKG
+>
+> Thank you,
+> BIOMAPS
+>
+> This message was sent by an automated system.
+
 ---
 
 ## Environment Variables — Complete Reference
