@@ -348,6 +348,121 @@ All Qualtrics API calls use a bearer token (`QUALTRICS_API_TOKEN`) in the `X-API
 
 All Lambda functions validate incoming requests using a shared token (`EXPECTED_TOKEN`) passed in the request headers. Requests without a valid token are rejected with a 401 response.
 
+### Qualtrics Workflows
+
+Two workflows are configured in Qualtrics on the Course Information Survey (CIS). These orchestrate the handoff between Qualtrics and the AWS Lambda functions.
+
+#### Workflow 1: "Create Requested Survey" (Triggered on CIS Submission)
+
+**Trigger:** A new response is created on `Course_Information_Survey_v2` (newly created responses only — not API updates, imports, or incomplete responses).
+
+This workflow runs automatically when an instructor submits the CIS, kicking off the full survey creation pipeline:
+
+```
+Instructor submits CIS
+        │
+        ▼
+┌─────────────────────────────────┐
+│  T-ID 1: Create Survey Using AWS │
+│  POST → createBIOMAPSSurvey      │
+│  Sends: Institution, InstructorLast, Instructor_ID, Number, SurveyType │
+│  Returns: surveyId, surveyLink   │
+└─────────────────────────────────┘
+        │
+        ▼
+┌──────────────────────────────────────┐
+│  T-ID 5: Add course ID to InProgress │
+│  POST → update_inprogressBIOMAPS     │
+│  Sends: Instructor_ID               │
+└──────────────────────────────────────┘
+        │
+        ▼
+┌─────────────────────────────────┐
+│  T-ID 3: Send Email             │
+│  To: Instructor email            │
+│  From: BIOMAPS@cornell.edu       │
+│  Subject: "{Survey Type} Survey link ({ResponseID})" │
+│  Body: Survey link + instructions to share with      │
+│        students ≥7 days before close date             │
+└─────────────────────────────────┘
+        │
+        ▼
+┌──────────────────────────────────────────┐
+│  T-ID 4: Update Response's Embedded Data │
+│  PUT → Qualtrics API                     │
+│  Sets "Survey ID" and "Survey Sent" date │
+│  on the instructor's CIS response        │
+└──────────────────────────────────────────┘
+```
+
+**Task details:**
+
+| Step | Type | Target | What it does |
+|------|------|--------|-------------|
+| T-ID 1 | WebService (POST) | `createBIOMAPSSurvey` Lambda | Passes CIS answers (institution, instructor last name, course number, survey type, instructor ID) to create the survey. Returns `surveyId` and `surveyLink`, which are piped into later tasks. |
+| T-ID 5 | WebService (POST) | `update_inprogressBIOMAPS` Lambda | Passes the instructor's Response ID as `Instructor_ID` to add the class to the in-progress tracking CSV. |
+| T-ID 3 | Email | Instructor | Sends the survey link and close date to the instructor (see full template below). |
+| T-ID 4 | WebService (PUT) | Qualtrics API (`/API/v3/responses/{ResponseID}`) | Updates the CIS response's embedded data with the new `Survey ID` (from T-ID 1) and sets `Survey Sent` to the current date. |
+
+**T-ID 3 email template (sent to instructor on CIS submission):**
+
+> Dear {First Name} {Last Name},
+>
+> Thank you for participating in the {Survey Type} survey. Below is the link to the survey for your course, {Course Name} ({Course Number}):
+>
+> {Survey Link}
+>
+> Please share this link with your students at least 7 days before the close date listed below.
+>
+> This link is currently active and will remain active until:
+> {Close Date}
+>
+> If you would like to change the date that the survey will stop accepting responses from students, please complete the form here with your unique ResponseID ({ResponseID}):
+>
+> https://cornell.ca1.qualtrics.com/jfe/form/SV_3TTUJMbWVDZ2aKG
+>
+> Let us know by replying to this email if you have any questions about this process.
+>
+> Thank you,
+> BIOMAPS
+>
+> This message was sent by an automated system.
+
+#### Workflow 2: "Send Requested Email" (Triggered by AWS)
+
+**Trigger:** JSON inbound event via trigger URL (called by `automateBIOMAPS` Lambda).
+
+This is a simple email relay — the Lambda constructs the full email content and posts it to the Qualtrics trigger URL, which sends the email.
+
+```
+automateBIOMAPS Lambda
+        │
+        ▼
+┌──────────────────────────────┐
+│  JSON Trigger                 │
+│  Receives: emailAddress,      │
+│  emailSubject, emailBody      │
+└──────────────────────────────┘
+        │
+        ▼
+┌──────────────────────────────┐
+│  T-ID 1: Send Requested Email│
+│  From: BIOMAPS@cornell.edu    │
+│  To/Subject/Body from trigger │
+└──────────────────────────────┘
+```
+
+| Field | Source |
+|-------|--------|
+| **Trigger URL** | `EMAIL_REQUEST_URL` environment variable in `automateBIOMAPS` |
+| **To** | `emailAddress` from JSON payload |
+| **Subject** | `emailSubject` from JSON payload |
+| **Body** | `emailBody` from JSON payload |
+| **From** | BIOMAPS@cornell.edu (display name: "BIOMAPS") |
+| **Reply-To** | BIOMAPS@cornell.edu |
+
+This workflow is used to send both **survey reminder emails** (when the close date is within 4 days) and **report-ready emails** (when the survey closes and data is uploaded). The email templates are defined in `automateBIOMAPS/utilities/reminder.txt` and `automateBIOMAPS/utilities/report_sent.txt`.
+
 ---
 
 ## Environment Variables — Complete Reference
