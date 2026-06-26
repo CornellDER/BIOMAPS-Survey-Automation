@@ -33,9 +33,6 @@ def validate_responses(df, survey_type):
         age_question = "Age"
         consent_valid_age = 1
 
-    #df['Valid'] = np.nan # start with empty column
-    #df.loc[(df[consent_question] == consent_valid_answer) & (df[age_question] == consent_valid_age), 'Valid'] = 1 # if they consent and are 18 or older, it's valid 
-    #df.loc[(df[consent_question] != consent_valid_answer) | (df[age_question] != consent_valid_age), 'Valid'] = 0 # if they do not consent or are not 18, it's not valid
     df["Valid"] = (
         (df[consent_question] == consent_valid_answer)
         & (df[age_question] == consent_valid_age)
