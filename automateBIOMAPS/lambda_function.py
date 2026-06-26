@@ -1,3 +1,4 @@
+# Scheduled Lambda: monitors active surveys, sends reminders, and closes expired surveys
 import boto3
 import json
 import os

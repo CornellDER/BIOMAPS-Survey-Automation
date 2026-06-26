@@ -1,3 +1,4 @@
+# API endpoint: allows instructors to update survey close dates and reminder preferences
 import json
 import boto3
 import requests

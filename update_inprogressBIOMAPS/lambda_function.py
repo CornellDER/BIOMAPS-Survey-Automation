@@ -1,3 +1,4 @@
+# API endpoint: adds a class to the in-progress tracking CSV in S3
 import json
 import boto3
 import os
