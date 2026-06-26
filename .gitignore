@@ -1,0 +1,38 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# Bundled dependencies (installed during CI/CD deployment)
+# These are pip packages that get zipped into each Lambda but shouldn't live in git.
+bin/
+certifi/
+certifi-*.dist-info/
+charset_normalizer/
+charset_normalizer-*.dist-info/
+idna/
+idna-*.dist-info/
+requests/
+requests-*.dist-info/
+urllib3/
+urllib3-*.dist-info/
+pandas/
+pandas-*.dist-info/
+numpy/
+numpy-*.dist-info/
+pytz/
+pytz-*.dist-info/
+dateutil/
+python_dateutil-*.dist-info/
+six/
+six-*.dist-info/
+botocore/
+botocore-*.dist-info/
+boto3/
+boto3-*.dist-info/
+s3transfer/
+s3transfer-*.dist-info/
+jmespath/
+jmespath-*.dist-info/

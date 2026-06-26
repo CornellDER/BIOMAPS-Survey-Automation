@@ -1,0 +1,147 @@
+name: Deploy Lambda Functions
+
+on:
+  push:
+    branches: [main]
+
+env:
+  AWS_REGION: us-east-2  # Change to your AWS region
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      automateBIOMAPS: ${{ steps.changes.outputs.automateBIOMAPS }}
+      changeBIOMAPSDates: ${{ steps.changes.outputs.changeBIOMAPSDates }}
+      createBIOMAPSSurvey: ${{ steps.changes.outputs.createBIOMAPSSurvey }}
+      update_inprogressBIOMAPS: ${{ steps.changes.outputs.update_inprogressBIOMAPS }}
+      uploadBIOMAPSDashboardData: ${{ steps.changes.outputs.uploadBIOMAPSDashboardData }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            automateBIOMAPS:
+              - 'automateBIOMAPS/**'
+            changeBIOMAPSDates:
+              - 'changeBIOMAPSDates/**'
+            createBIOMAPSSurvey:
+              - 'createBIOMAPSSurvey/**'
+            update_inprogressBIOMAPS:
+              - 'update_inprogressBIOMAPS/**'
+            uploadBIOMAPSDashboardData:
+              - 'uploadBIOMAPSDashboardData/**'
+
+  deploy-automateBIOMAPS:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.automateBIOMAPS == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Install dependencies and deploy
+        run: |
+          cd automateBIOMAPS
+          pip install -r requirements.txt -t .
+          zip -r ../automateBIOMAPS.zip . -x "__pycache__/*" "*.pyc" "requirements.txt"
+          aws lambda update-function-code \
+            --function-name automateBIOMAPS \
+            --zip-file fileb://../automateBIOMAPS.zip
+
+  deploy-changeBIOMAPSDates:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changeBIOMAPSDates == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Install dependencies and deploy
+        run: |
+          cd changeBIOMAPSDates
+          pip install -r requirements.txt -t .
+          zip -r ../changeBIOMAPSDates.zip . -x "__pycache__/*" "*.pyc" "requirements.txt"
+          aws lambda update-function-code \
+            --function-name changeBIOMAPSDates \
+            --zip-file fileb://../changeBIOMAPSDates.zip
+
+  deploy-createBIOMAPSSurvey:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.createBIOMAPSSurvey == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Install dependencies and deploy
+        run: |
+          cd createBIOMAPSSurvey
+          pip install -r requirements.txt -t .
+          zip -r ../createBIOMAPSSurvey.zip . -x "__pycache__/*" "*.pyc" "requirements.txt"
+          aws lambda update-function-code \
+            --function-name createBIOMAPSSurvey \
+            --zip-file fileb://../createBIOMAPSSurvey.zip
+
+  deploy-update_inprogressBIOMAPS:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.update_inprogressBIOMAPS == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Deploy
+        run: |
+          cd update_inprogressBIOMAPS
+          zip -r ../update_inprogressBIOMAPS.zip . -x "__pycache__/*" "*.pyc" "requirements.txt"
+          aws lambda update-function-code \
+            --function-name update_inprogressBIOMAPS \
+            --zip-file fileb://../update_inprogressBIOMAPS.zip
+
+  deploy-uploadBIOMAPSDashboardData:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.uploadBIOMAPSDashboardData == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Install dependencies and deploy
+        run: |
+          cd uploadBIOMAPSDashboardData
+          pip install -r requirements.txt -t .
+          zip -r ../uploadBIOMAPSDashboardData.zip . -x "__pycache__/*" "*.pyc" "requirements.txt"
+          aws lambda update-function-code \
+            --function-name uploadBIOMAPSDashboardData \
+            --zip-file fileb://../uploadBIOMAPSDashboardData.zip
