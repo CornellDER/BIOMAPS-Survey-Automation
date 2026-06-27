@@ -10,7 +10,7 @@ Five AWS Lambda functions that automate the BIOMAPS assessment survey lifecycle 
 - [Architecture](#architecture)
 - [Lambda Functions — Detailed Reference](#lambda-functions--detailed-reference)
 - [S3 Buckets](#s3-buckets)
-- [Qualtrics Integration](#qualtrics-integration)
+- [Qualtrics Workflows](#qualtrics-workflows)
 - [Environment Variables — Complete Reference](#environment-variables--complete-reference)
 - [Deployment Notes](#deployment-notes)
 - [Typical Survey Lifecycle](#typical-survey-lifecycle)
@@ -24,12 +24,12 @@ This system automates the lifecycle of BIOMAPS (Biology Measuring Achievement an
 
 The four supported assessment types are:
 
-| Assessment | Full Name | Domain |
-|------------|-----------|--------|
-| **GenBio-MAPS** | General Biology MAPS | Introductory biology |
-| **EcoEvo-MAPS** | Ecology & Evolution MAPS | Ecology and evolutionary biology |
-| **Phys-MAPS** | Physics MAPS | Introductory physics |
-| **Capstone** | Capstone | Senior-level biology |
+| Assessment | Full Name |
+|------------|-----------|
+| **GenBio-MAPS** | General biology |
+| **EcoEvo-MAPS** | Ecology and evolution |
+| **Phys-MAPS** | Physiology |
+| **Capstone** | Molecular biology capstone |
 
 ---
 
@@ -112,11 +112,11 @@ Instructor (via Qualtrics / API)
 | Variable | Description |
 |----------|-------------|
 | `QUALTRICS_API_TOKEN` | API token for authenticating with Qualtrics |
-| `QUALTRICS_BASE_URL` | Qualtrics datacenter base URL (e.g., `https://yul1.qualtrics.com`) |
+| `QUALTRICS_BASE_URL` | Qualtrics datacenter base URL (i.e., `https://yul1.qualtrics.com`) |
 | `CIS_SURVEY_ID` | Survey ID of the Course Information Survey in Qualtrics |
 | `EXPECTED_TOKEN` | Shared API key used to authenticate inter-service calls |
 | `INPROGRESS_BUCKET_NAME` | S3 bucket name containing the in-progress tracking CSV |
-| `INPROGRESS_FILE_NAME` | Filename of the in-progress CSV (e.g., `in_progress.csv`) |
+| `INPROGRESS_FILE_NAME` | Filename of the in-progress CSV (i.e., `in_progress.csv`) |
 | `EMAIL_REQUEST_URL` | Endpoint for sending emails via Qualtrics distributions |
 
 ---
@@ -340,7 +340,7 @@ The output columns vary by assessment type but generally include:
 
 ---
 
-## Qualtrics Integration
+## Qualtrics Workflows
 
 ### Course Information Survey (CIS)
 
