@@ -16,6 +16,7 @@ Five AWS Lambda functions that automate the BIOMAPS assessment survey lifecycle 
 - [Environment Variables — Complete Reference](#environment-variables--complete-reference)
 - [Deployment Notes](#deployment-notes)
 - [Typical Survey Lifecycle](#typical-survey-lifecycle)
+- [File Structure](#file-structure)
 - [Troubleshooting](#troubleshooting)
 - [Acknowledgements](#acknowledgements)
 
@@ -628,6 +629,50 @@ Instructor submits BIOMAPS_Date_Changes form
 ```
 
 If an instructor needs to reopen or extend their survey, they use **changeBIOMAPSDates**, which reactivates the survey, sets a new close date, and re-adds the class to in-progress tracking so `automateBIOMAPS` picks it up again.
+
+---
+
+## File Structure
+
+```
+automateBIOMAPS/
+├── lambda_function.py          (main orchestrator)
+├── utilities/
+│   ├── qualtrics_utils.py      (API calls for surveys)
+│   ├── email_utils.py          (email building & sending)
+│   ├── reminder.txt            (email template)
+│   └── report_sent.txt         (email template)
+└── [requests, certifi, urllib3, charset_normalizer bundles]
+
+changeBIOMAPSDates/
+├── lambda_function.py          (HTTP endpoint for date changes)
+└── [requests library bundles]
+
+createBIOMAPSSurvey/
+├── lambda_function.py          (survey creation)
+├── GenBio-MAPS.qsf             (QSF template)
+├── EcoEvo-MAPS.qsf             (QSF template)
+├── Phys-MAPS.qsf               (QSF template)
+├── Capstone.qsf                (QSF template)
+└── [requests library bundles]
+
+update_inprogressBIOMAPS/
+└── lambda_function.py          (CSV utility)
+
+uploadBIOMAPSDashboardData/
+├── lambda_function.py          (main handler)
+├── utilities/
+│   ├── compiling_utils.py      (orchestrator)
+│   ├── qualtrics_utils.py      (API & exports)
+│   ├── processing_utils.py     (demographics & column formatting)
+│   ├── scoring_utils.py        (BIOMAPS scoring & validation)
+│   ├── AssessmentSolutions/
+│   │   ├── {Type}_Solutions.csv     (answer keys)
+│   │   └── {Type}_Constructs.csv    (construct groupings)
+│   └── ColumnOrdering/
+│       └── {Type}_Headers.csv       (column order spec)
+└── [requests, pandas, numpy bundles]
+```
 
 ---
 
