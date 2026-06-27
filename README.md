@@ -26,10 +26,10 @@ The four supported assessment types are:
 
 | Assessment | Full Name | Domain |
 |------------|-----------|--------|
-| **Capstone** | Capstone | Senior-level biology |
-| **EcoEvo-MAPS** | Ecology & Evolution MAPS | Ecology and evolutionary biology |
 | **GenBio-MAPS** | General Biology MAPS | Introductory biology |
+| **EcoEvo-MAPS** | Ecology & Evolution MAPS | Ecology and evolutionary biology |
 | **Phys-MAPS** | Physics MAPS | Introductory physics |
+| **Capstone** | Capstone | Senior-level biology |
 
 ---
 
@@ -144,7 +144,7 @@ Instructor (via Qualtrics / API)
 | `institution` | Name of the institution | `"University of Colorado"` |
 | `number` | Course number or identifier | `"BIO101"` |
 | `instructor_last` | Instructor's last name | `"Smith"` |
-| `survey_type` | One of: `Capstone`, `EcoEvo-MAPS`, `GenBio-MAPS`, `Phys-MAPS` | `"GenBio-MAPS"` |
+| `survey_type` | One of: `GenBio-MAPS`, `EcoEvo-MAPS`, `Phys-MAPS`, `Capstone` | `"GenBio-MAPS"` |
 | `instructor_id` | Unique instructor identifier from CIS | `"R_abc123"` |
 
 **Source files:**
@@ -152,10 +152,10 @@ Instructor (via Qualtrics / API)
 | File | Purpose |
 |------|---------|
 | `lambda_function.py` | Main handler — input validation, Qualtrics API calls, survey creation |
-| `Capstone.qsf` | QSF template for Capstone assessments |
-| `EcoEvo-MAPS.qsf` | QSF template for EcoEvo-MAPS assessments |
 | `GenBio-MAPS.qsf` | QSF template for GenBio-MAPS assessments (largest template) |
+| `EcoEvo-MAPS.qsf` | QSF template for EcoEvo-MAPS assessments |
 | `Phys-MAPS.qsf` | QSF template for Phys-MAPS assessments |
+| `Capstone.qsf` | QSF template for Capstone assessments |
 
 **Environment variables:**
 
@@ -351,7 +351,7 @@ Key embedded data fields stored in CIS responses:
 | Field | Description |
 |-------|-------------|
 | Survey ID | The Qualtrics survey ID for the instructor's assessment |
-| Survey Type | Which BIOMAPS assessment (Capstone, EcoEvo-MAPS, GenBio-MAPS, Phys-MAPS) |
+| Survey Type | Which BIOMAPS assessment (GenBio-MAPS, EcoEvo-MAPS, Phys-MAPS, Capstone) |
 | Course Type | Level of the course |
 | Class Size | Number of students enrolled |
 | Survey Close Date | When the survey should be closed |
