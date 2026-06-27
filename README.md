@@ -2,6 +2,8 @@
 
 Five AWS Lambda functions that automate the BIOMAPS assessment survey lifecycle — survey creation, date management, scheduled reminders, and scored data uploads to S3 — integrated with Qualtrics and a Streamlit dashboard.
 
+**Public page:** [Bio-MAPS at Cornell](https://cperl.lassp.cornell.edu/bio-maps)
+
 ---
 
 ## Table of Contents
@@ -15,6 +17,7 @@ Five AWS Lambda functions that automate the BIOMAPS assessment survey lifecycle 
 - [Deployment Notes](#deployment-notes)
 - [Typical Survey Lifecycle](#typical-survey-lifecycle)
 - [Troubleshooting](#troubleshooting)
+- [Acknowledgements](#acknowledgements)
 
 ---
 
@@ -639,3 +642,9 @@ If an instructor needs to reopen or extend their survey, they use **changeBIOMAP
 | Duplicate data in dashboard | Survey was reopened and re-closed | The upload function handles this by removing existing rows with the same Class_ID before appending |
 | 401 errors on API calls | `EXPECTED_TOKEN` mismatch between caller and Lambda | Verify environment variables match across all functions |
 | Qualtrics API errors | Token expired or rate-limited | Verify `QUALTRICS_API_TOKEN` is current; check Qualtrics API limits |
+
+---
+
+## Acknowledgements
+
+Current dashboard built by Matthew Dew. Previous iteration developed by Cole Walsh. Original Bio-MAPS server based on work by Wilcox, Zwickl, Hobbs, Aiken, Welch, & Lewandowski (2016).
