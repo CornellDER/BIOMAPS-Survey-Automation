@@ -87,6 +87,8 @@ Instructor (via Qualtrics / API)
 
 **Trigger:** Scheduled (AWS EventBridge / CloudWatch Events)
 
+**Qualtrics workflow connection:** Calls **Workflow 2 ("Send Requested Email")** via the `EMAIL_REQUEST_URL` to send both survey reminder emails and report-ready notification emails. The Lambda constructs the email content and posts it as a JSON payload to the workflow's trigger URL.
+
 **Purpose:** The core automation engine. Runs periodically to monitor all active surveys and take action based on their close dates. Processes one survey per invocation to stay within Lambda time limits and avoid overloading the Qualtrics API.
 
 **What it does each invocation:**
@@ -124,6 +126,8 @@ Instructor (via Qualtrics / API)
 ### 2. createBIOMAPSSurvey
 
 **Trigger:** API Gateway (HTTP POST)
+
+**Qualtrics workflow connection:** Called by **Workflow 1 ("Create Requested Survey")** as T-ID 1 when an instructor submits the CIS. The workflow passes in the instructor's survey parameters and receives back the new `surveyId` and `surveyLink`.
 
 **Purpose:** Creates a new BIOMAPS assessment survey in Qualtrics from a predefined template (QSF file). Returns the new survey's ID and link so the instructor can distribute it to students.
 
@@ -172,6 +176,8 @@ Instructor (via Qualtrics / API)
 
 **Trigger:** API Gateway (HTTP POST)
 
+**Qualtrics workflow connection:** Called by **Workflow 3 ("Update Close Dates, Update CIS, and Send Email")** as T-ID 1 when an instructor submits the BIOMAPS_Date_Changes form. The workflow passes in the requested close date and reminder preference, and receives back instructor details, a JSON payload for updating the CIS, and an `Update Possible` flag.
+
 **Purpose:** Allows instructors to modify the close date and reminder preferences for their active survey. If the survey was previously closed, this function reactivates it.
 
 **What it does:**
@@ -216,6 +222,8 @@ Instructor (via Qualtrics / API)
 
 **Trigger:** API Gateway (HTTP POST)
 
+**Qualtrics workflow connection:** Called by **Workflow 1 ("Create Requested Survey")** as T-ID 5 after a new survey is created. The workflow passes the instructor's Response ID so the class gets added to in-progress tracking.
+
 **Purpose:** Manually adds a class/instructor to the in-progress tracking CSV. Used when a survey is created or managed outside the normal automated workflow and needs to be picked up by `automateBIOMAPS`.
 
 **What it does:**
@@ -252,6 +260,8 @@ Instructor (via Qualtrics / API)
 ### 5. uploadBIOMAPSDashboardData
 
 **Trigger:** API Gateway (HTTP POST) or called internally by `automateBIOMAPS`
+
+**Qualtrics workflow connection:** Not directly connected to a Qualtrics workflow. Invoked by `automateBIOMAPS` when a survey's close date has passed.
 
 **Purpose:** The data processing pipeline. Downloads raw survey responses from Qualtrics, validates and filters them, scores student answers against answer keys, labels demographic data, and uploads the processed results to S3 for the Streamlit dashboard.
 
