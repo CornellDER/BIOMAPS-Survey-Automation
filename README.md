@@ -1,4 +1,4 @@
-# BIOMAPS Survey Automation
+# Bio-MAPS Survey Automation
 
 Five AWS Lambda functions that automate the BIOMAPS assessment survey lifecycle — survey creation, date management, scheduled reminders, and scored data uploads to S3 — integrated with Qualtrics and a Streamlit dashboard.
 
