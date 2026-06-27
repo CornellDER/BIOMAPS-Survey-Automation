@@ -1,4 +1,22 @@
-# BIOMAPS Survey Automation System
+# BIOMAPS Survey Automation
+
+Five AWS Lambda functions that automate the BIOMAPS assessment survey lifecycle — survey creation, date management, scheduled reminders, and scored data uploads to S3 — integrated with Qualtrics and a Streamlit dashboard.
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Lambda Functions — Detailed Reference](#lambda-functions--detailed-reference)
+- [S3 Buckets](#s3-buckets)
+- [Qualtrics Integration](#qualtrics-integration)
+- [Environment Variables — Complete Reference](#environment-variables--complete-reference)
+- [Deployment Notes](#deployment-notes)
+- [Typical Survey Lifecycle](#typical-survey-lifecycle)
+- [Troubleshooting](#troubleshooting)
+
+---
 
 ## Overview
 
@@ -21,9 +39,9 @@ The four supported assessment types are:
 Instructor (via Qualtrics / API)
         │
         ▼
-┌──────────────────────┐
+┌───────────────────────┐
 │  createBIOMAPSSurvey  │──── Creates a new survey from QSF template in Qualtrics
-└──────────────────────┘
+└───────────────────────┘
         │
         ▼
 ┌────────────────────────────┐
@@ -31,19 +49,19 @@ Instructor (via Qualtrics / API)
 └────────────────────────────┘
         │
         ▼
-┌───────────────────────┐
-│  changeBIOMAPSDates    │──── Lets instructors change close dates / reminders
-└───────────────────────┘
+┌──────────────────────┐
+│  changeBIOMAPSDates  │──── Lets instructors change close dates / reminders
+└──────────────────────┘
         │
         ▼
-┌──────────────────┐         (runs on a schedule via EventBridge)
+┌───────────────────┐
 │  automateBIOMAPS  │──── Monitors active surveys: sends reminders, closes surveys,
-└──────────────────┘     triggers data upload when surveys close
-        │
+└───────────────────┘     triggers data upload when surveys close
+        │                 (runs on a schedule via EventBridge)
         ▼
-┌───────────────────────────────┐
-│  uploadBIOMAPSDashboardData   │──── Scores responses, uploads results to S3
-└───────────────────────────────┘
+┌──────────────────────────────┐
+│  uploadBIOMAPSDashboardData  │──── Scores responses, uploads results to S3
+└──────────────────────────────┘
         │
         ▼
    S3 Dashboard Bucket  ──── Consumed by Streamlit dashboard
@@ -362,37 +380,38 @@ This workflow runs automatically when an instructor submits the CIS, kicking off
 Instructor submits CIS
         │
         ▼
-┌─────────────────────────────────┐
-│  T-ID 1: Create Survey Using AWS │
-│  POST → createBIOMAPSSurvey      │
-│  Sends: Institution, InstructorLast, Instructor_ID, Number, SurveyType │
-│  Returns: surveyId, surveyLink   │
-└─────────────────────────────────┘
+┌───────────────────────────────────────┐
+│  T-ID 1: Create Survey Using AWS      │
+│  POST → createBIOMAPSSurvey           │
+│  Sends: Institution, InstructorLast,  │
+│    Instructor_ID, Number, SurveyType  │
+│  Returns: surveyId, surveyLink        │
+└───────────────────────────────────────┘
         │
         ▼
-┌──────────────────────────────────────┐
-│  T-ID 5: Add course ID to InProgress │
-│  POST → update_inprogressBIOMAPS     │
-│  Sends: Instructor_ID               │
-└──────────────────────────────────────┘
+┌───────────────────────────────────────┐
+│  T-ID 5: Add course ID to InProgress  │
+│  POST → update_inprogressBIOMAPS      │
+│  Sends: Instructor_ID                 │
+└───────────────────────────────────────┘
         │
         ▼
-┌─────────────────────────────────┐
-│  T-ID 3: Send Email             │
-│  To: Instructor email            │
-│  From: BIOMAPS@cornell.edu       │
-│  Subject: "{Survey Type} Survey link ({ResponseID})" │
-│  Body: Survey link + instructions to share with      │
-│        students ≥7 days before close date             │
-└─────────────────────────────────┘
+┌───────────────────────────────────────────────────────┐
+│  T-ID 3: Send Email                                   │
+│  To: Instructor email                                 │
+│  From: BIOMAPS@cornell.edu                            │
+│  Subject: "{Survey Type} Survey link ({ResponseID})"  │
+│  Body: Survey link + instructions to share            │
+│    with students ≥7 days before close date            │
+└───────────────────────────────────────────────────────┘
         │
         ▼
-┌──────────────────────────────────────────┐
-│  T-ID 4: Update Response's Embedded Data │
-│  PUT → Qualtrics API                     │
-│  Sets "Survey ID" and "Survey Sent" date │
-│  on the instructor's CIS response        │
-└──────────────────────────────────────────┘
+┌───────────────────────────────────────────┐
+│  T-ID 4: Update Response's Embedded Data  │
+│  PUT → Qualtrics API                      │
+│  Sets "Survey ID" and "Survey Sent" date  │
+│  on the instructor's CIS response         │
+└───────────────────────────────────────────┘
 ```
 
 **Task details:**
@@ -438,18 +457,18 @@ This is a simple email relay — the Lambda constructs the full email content an
 automateBIOMAPS Lambda
         │
         ▼
-┌──────────────────────────────┐
-│  JSON Trigger                 │
-│  Receives: emailAddress,      │
-│  emailSubject, emailBody      │
-└──────────────────────────────┘
+┌───────────────────────────┐
+│  JSON Trigger             │
+│  Receives: emailAddress,  │
+│  emailSubject, emailBody  │
+└───────────────────────────┘
         │
         ▼
-┌──────────────────────────────┐
-│  T-ID 1: Send Requested Email│
-│  From: BIOMAPS@cornell.edu    │
-│  To/Subject/Body from trigger │
-└──────────────────────────────┘
+┌────────────────────────────────┐
+│  T-ID 1: Send Requested Email  │
+│  From: BIOMAPS@cornell.edu     │
+│  To/Subject/Body from trigger  │
+└────────────────────────────────┘
 ```
 
 | Field | Source |
@@ -474,43 +493,42 @@ Instructor submits BIOMAPS_Date_Changes form
 (provides ResponseID, new close date, reminder preference)
         │
         ▼
-┌──────────────────────────────────────────┐
-│  T-ID 1: Initiate necessary changes      │
-│  POST → changeBIOMAPSDates Lambda        │
-│  Sends: Instructor_ID, Requested Survey  │
-│         Close Date, Requested Survey     │
-│         Reminder                         │
-│  Returns: Email, Course Name, Course     │
-│  Number, Instructor name, Survey Type,   │
-│  JSON Request, Update Possible           │
-└──────────────────────────────────────────┘
+┌───────────────────────────────────────────┐
+│  T-ID 1: Initiate necessary changes       │
+│  POST → changeBIOMAPSDates Lambda         │
+│  Sends: Instructor_ID, Requested Survey   │
+│    Close Date, Requested Survey Reminder  │
+│  Returns: Email, Course Name, Course      │
+│    Number, Instructor name, Survey Type,  │
+│    JSON Request, Update Possible          │
+└───────────────────────────────────────────┘
         │
         ▼
-┌──────────────────────────────────────────┐
-│  T-ID 2: Update CIS Response's           │
-│  Embedded Data                           │
-│  PUT → Qualtrics API                     │
-│  Updates the CIS response with the       │
-│  JSON Request from T-ID 1 (new close     │
-│  date and reminder settings)             │
-└──────────────────────────────────────────┘
+┌───────────────────────────────────────┐
+│  T-ID 2: Update CIS Response's        │
+│  Embedded Data                        │
+│  PUT → Qualtrics API                  │
+│  Updates the CIS response with the    │
+│  JSON Request from T-ID 1 (new close  │
+│  date and reminder settings)          │
+└───────────────────────────────────────┘
         │
         ▼
-┌──────────────────────────────────────────┐
-│  Decision: Survey change requested       │
-│  is valid                                │
-│  Continues ONLY if T-ID 1 returned       │
-│  "Update Possible" == true               │
-│  (otherwise workflow ends, no email sent)│
-└──────────────────────────────────────────┘
+┌────────────────────────────────────────────┐
+│  Decision: Survey change requested         │
+│  is valid                                  │
+│  Continues ONLY if T-ID 1 returned         │
+│  "Update Possible" == true                 │
+│  (otherwise workflow ends, no email sent)  │
+└────────────────────────────────────────────┘
         │ (if valid)
         ▼
-┌──────────────────────────────────────────┐
-│  T-ID 3: Send confirmation email         │
-│  To: Instructor email (from T-ID 1)      │
-│  From: BIOMAPS@cornell.edu               │
-│  Confirms new close date                 │
-└──────────────────────────────────────────┘
+┌──────────────────────────────────────┐
+│  T-ID 3: Send confirmation email     │
+│  To: Instructor email (from T-ID 1)  │
+│  From: BIOMAPS@cornell.edu           │
+│  Confirms new close date             │
+└──────────────────────────────────────┘
 ```
 
 **Task details:**
@@ -583,7 +601,7 @@ Instructor submits BIOMAPS_Date_Changes form
 5. Students complete the assessment
                 │
     ┌───────────────────────────────────────────┐
-    │  automateBIOMAPS (scheduled, recurring)    │
+    │  automateBIOMAPS (scheduled, recurring)   │
     │                                           │
     │  • Checks each active class               │
     │  • Sends reminder if close date ≤ 4 days  │
