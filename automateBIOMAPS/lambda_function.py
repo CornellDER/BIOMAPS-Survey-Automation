@@ -6,6 +6,7 @@ import csv
 import io
 import requests
 import datetime
+from zoneinfo import ZoneInfo
 
 from utilities.email_utils import send_email
 from utilities.qualtrics_utils import update_response_data, get_response_data, close_survey
@@ -103,8 +104,8 @@ def lambda_handler(event, context):
             survey_closed = values.get("Survey Closed")
             survey_sent = values.get("Survey Sent")
 
-            # Get current time for comparisons
-            current_date = datetime.datetime.today().date()
+            # Get current date in Eastern time for comparisons
+            current_date = datetime.datetime.now(ZoneInfo("America/New_York")).date()
             
             # Format dates for comparisons
             if survey_close_date not in (None, ""):
